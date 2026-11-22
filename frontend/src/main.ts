@@ -1,14 +1,5 @@
-const status = document.querySelector<HTMLParagraphElement>("#status");
-
-async function checkApi() {
-  if (!status) return;
-  try {
-    const response = await fetch("/api/health");
-    const result: { status: string } = await response.json();
-    status.textContent = result.status === "ok" ? "服务已就绪" : "服务状态异常";
-  } catch {
-    status.textContent = "服务暂不可用，请稍后重试";
-  }
-}
-
-void checkApi();
+import './style.css';
+const app=document.querySelector<HTMLDivElement>('#app')!;
+app.innerHTML=`<section class="auth"><h1>安心用药</h1><p>登录患者账户，继续管理用药计划</p><form id="form"><label>手机号<input name="phone" autocomplete="tel" required></label><label>密码<input name="password" type="password" minlength="10" autocomplete="current-password" required></label><label id="namelabel" hidden>姓名<input name="name" autocomplete="name"></label><label>验证码<div class="captcha-row"><input name="captcha" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="输入图片中的4位数字" required><img id="captcha-image" alt="四位数字验证码"><button type="button" id="refresh-captcha" aria-label="刷新验证码">换一张</button></div></label><button>登录</button></form><button class="link" id="toggle">创建患者账户</button><p id="message" role="status"></p></section>`;
+let registering=false;const reloadCaptcha=()=>{document.querySelector<HTMLImageElement>('#captcha-image')!.src='/api/auth/captcha?t='+Date.now()};reloadCaptcha();document.querySelector('#refresh-captcha')!.addEventListener('click',reloadCaptcha);const form=document.querySelector<HTMLFormElement>('#form')!;document.querySelector('#toggle')!.addEventListener('click',()=>{registering=!registering;document.querySelector<HTMLElement>('#namelabel')!.hidden=!registering;document.querySelector<HTMLButtonElement>('#form button')!.textContent=registering?'注册并登录':'登录';document.querySelector('#toggle')!.textContent=registering?'已有账户？登录':'创建患者账户'});
+form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form));const msg=document.querySelector<HTMLElement>('#message')!;try{const res=await fetch('/api/auth/'+(registering?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(data)});if(!res.ok)throw new Error(await res.text());msg.textContent='登录成功';reloadCaptcha();}catch(err){msg.textContent=String(err);reloadCaptcha()}});
